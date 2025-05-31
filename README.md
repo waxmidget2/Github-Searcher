@@ -168,7 +168,6 @@ Result 2:
 
 - **No hardcoded credentials:** Tokens are loaded from `.env` or environment variables.
 - **Safe token management:** The tool can update your `.env` file with a new token interactively.
-- **.env best practices:** Always add `.env` to your `.gitignore`.
 
 ---
 
