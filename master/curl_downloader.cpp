@@ -35,6 +35,14 @@ size_t CurlDownloader::write_callback_std_string(void* contents, size_t size, si
 void CurlDownloader::set_auth_token() {
   std::getline(std::cin, this->auth_token);
 }
+void CurlDownloader::set_auth_token(const std::string& token) {
+    this->auth_token = token;
+    if(auth_token.empty()) {
+        std::cerr << "Warning: Authorization token is empty. This may limit API access." << "\n";
+    } else {
+        std::cout << "Authorization token set successfully." << "\n";
+    }
+}
 
 std::string CurlDownloader::urlEncode(const std::string& str_to_encode) {
   if (!curl_handle) {
@@ -88,7 +96,7 @@ long CurlDownloader::searchRepositories(const std::string& search_term,
 
   std::cout << "CurlDownloader: Making API request to: " << full_api_url << "\n";
   // curl parameters, pretty straight forward in the libcurl doc
-  //
+  
   curl_easy_setopt(curl_handle, CURLOPT_URL, full_api_url.c_str());
   curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "MyGitHubClient/1.0");
   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, CurlDownloader::write_callback_std_string);
@@ -186,7 +194,7 @@ void CurlDownloader::download_url(const std::string& url, const std::string& nam
         }
     }
 
-    std::string filename = name; // Start with the provided 'name'
+    std::string filename = name; 
 
     size_t last_slash = url.find_last_of('/');
     std::string potential_filename_in_url = (last_slash != std::string::npos) ? url.substr(last_slash + 1) : url;

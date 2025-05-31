@@ -3,25 +3,32 @@
 #include <string>
 #include <limits>    
 #include <iomanip>   
-#include <algorithm> 
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
 
 #include "curl_downloader.h" 
 #include <curl/curl.h>
 
+// Print a separator line for better console formatting
 void printSeparator(char c = '-', int width = 80) {
     std::cout << std::string(width, c) << "\n";
 }
 
+// Print a formatted header with a title
 void printHeader(const std::string& title) {
     printSeparator('=');
     std::cout << "=== " << title << " ===" << "\n";
     printSeparator('=');
 }
 
+// Print a formatted sub-header with a title
 void printSubHeader(const std::string& title) {
     std::cout << "\n--- " << title << " ---" << "\n";
 }
 
+// Clear the input buffer to prevent unwanted input issues
 void clearInputBuffer() {
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     if (std::cin.fail()) { 
@@ -30,6 +37,7 @@ void clearInputBuffer() {
     }
 }
 
+// Prompt the user for a non-empty line of input
 std::string getNonEmptyLine(const std::string& prompt) {
     std::string input;
     while (true) {
@@ -44,14 +52,37 @@ std::string getNonEmptyLine(const std::string& prompt) {
     }
 }
 
+// Load key=value pairs from .env and set as environment variables
+void loadDotEnv(const std::string& filename = ".env") {
+    std::ifstream file(filename);
+    if (!file) return;
+    std::string line;
+    while (std::getline(file, line)) {
+        // Ignore comments and empty lines
+        if (line.empty() || line[0] == '#') continue;
+        std::istringstream is_line(line);
+        std::string key;
+        if (std::getline(is_line, key, '=')) {
+            std::string value;
+            if (std::getline(is_line, value)) {
+                setenv(key.c_str(), value.c_str(), 1); // 1 = overwrite
+            }
+        }
+    }
+}    
+
 
 int main() {
+  // Load environment variables from .env file
+  loadDotEnv();
+
+  // Store found repositories
   std::vector<ProjectInfo> found_projects;
   std::string searchTerm {};
   std::vector<std::string> qualifiers;
   printHeader("GitHub Repository Search Client");
 
-  // libcurl global application initialization
+  // Initialize libcurl for network operations
   std::cout << "\nInitializing network components (libcurl)..." << "\n";
   CURLcode global_init_res = curl_global_init(CURL_GLOBAL_ALL);
   if (global_init_res != CURLE_OK) {
@@ -65,13 +96,22 @@ int main() {
   std::cout << "Network components initialized successfully." << '\n';
 
   CurlDownloader downloader;
+
+  const char* env_token = std::getenv("GITHUB_TOKEN");
+  if (env_token && std::string(env_token).length() > 0) {
+      downloader.set_auth_token(std::string(env_token));
+      std::cout << "GitHub API token loaded from environment." << '\n';
+  } else {
+      std::cout << "No GitHub API token found in environment. You can set it with the 'at' command." << '\n';
+  }
+
   std::cout << "GitHub API Downloader instance created." << "\n";
   int page {1};
   bool running = true;
 
+  // Main application loop
   while(running) {
-    
-
+    // Command loop for user input
     while(true) {
       std::string mode {};
       printSubHeader("Options: \"download\", \"search\", \"exit\",");
@@ -80,8 +120,8 @@ int main() {
       printSeparator();
       std::cout << " > ";
       std::getline(std::cin, mode);
-      
 
+      // Handle download command
       if (mode == "download" )
       {
         if (found_projects.empty()) { 
@@ -111,25 +151,31 @@ int main() {
           clearInputBuffer();
         }
       } else if (mode == "search") {
+        // Start a new search
         page = 1;
         break;
       } else if (mode == "at") {
+        // Set authorization token for GitHub API
         printSubHeader("Please input your Authorization Token");
         downloader.set_auth_token();
       } else if (mode == "exit") { 
+        // Exit the application
         exit(0);
       } else if (mode == "np" || mode == "pp") {
+        // Handle pagination: next/previous page
         ++page; 
-        if (mode == "pp") { page -= 2; } // different approach
+        if (mode == "pp") { page -= 2; } // Go to previous page
         found_projects.clear();
 
         long http_status = downloader.searchRepositories(searchTerm, qualifiers, found_projects, page);
         printSubHeader("Search Results");
         
+        // Inform user if no more results are found
         if (http_status == 200 && found_projects.empty()) {
           std::cout << "No more results found. You might be at the last page." << std::endl;
         }
         
+        // Display search results or errors
         if (http_status == 200) { // HTTP OK
           std::cout << "API request successful (HTTP 200 OK)." << "\n";
           if (found_projects.empty()) {
@@ -143,6 +189,7 @@ int main() {
                 std::cout << "  " << std::left << std::setw(15) << "Name:" << project.name << "\n";
                 std::cout << "  " << std::left << std::setw(15) << "URL:" << project.html_url << "\n";
                 
+                // Handle description formatting
                 std::string desc = project.description;
                 if (desc.empty() || desc == "N/A") {
                     desc = "No description provided.";
@@ -162,6 +209,7 @@ int main() {
       }
     }
 
+    // Prompt user for search configuration
     printSubHeader("Search Configuration");
 
     searchTerm = getNonEmptyLine("Enter the primary GitHub repository search term (e.g., 'cpp web server'): ");
@@ -173,7 +221,7 @@ int main() {
     while (true) {
         std::cout << "Qualifier [" << qualifier_count << "] (or press Enter to finish): ";
         std::getline(std::cin, qualifier_input);
-        // Trim whitespace
+        // Trim leading and trailing whitespace
         qualifier_input.erase(0, qualifier_input.find_first_not_of(" \t\n\r\f\v"));
         qualifier_input.erase(qualifier_input.find_last_not_of(" \t\n\r\f\v") + 1);
 
@@ -188,6 +236,7 @@ int main() {
         qualifier_count++;
     }
 
+    // Perform the GitHub repository search
     printSubHeader("Performing Search");
     std::cout << "Searching GitHub for repositories matching: \"" << searchTerm << "\"" << "\n";
     if (!qualifiers.empty()) {
@@ -198,11 +247,11 @@ int main() {
     }
     std::cout << "Please wait, this may take a moment..." << "\n";
 
-    
     long http_status = downloader.searchRepositories(searchTerm, qualifiers, found_projects, 0);
 
     printSubHeader("Search Results");
 
+    // Display search results or error messages
     if (http_status == 200) { // HTTP OK
         std::cout << "API request successful (HTTP 200 OK)." << "\n";
         if (found_projects.empty()) {
@@ -218,6 +267,7 @@ int main() {
                 std::cout << "  " << std::left << std::setw(15) << "Name:" << project.name << "\n";
                 std::cout << "  " << std::left << std::setw(15) << "URL:" << project.html_url << "\n";
                 
+                // Handle description formatting
                 std::string desc = project.description;
                 if (desc.empty() || desc == "N/A") {
                     desc = "No description provided.";
@@ -233,7 +283,7 @@ int main() {
             }
             printSeparator();
         }
-    } else if (http_status > 0) { // Other HTTP error codes (e.g., 4xx, 5xx)
+    } else if (http_status > 0) { // Other HTTP error codes
         std::cerr << "API Request Error: GitHub API returned HTTP status code: " << http_status << "\n";
         std::cerr << "This could be due to various reasons:" << "\n";
         std::cerr << "  - Invalid search query or qualifiers." << "\n";
@@ -242,7 +292,7 @@ int main() {
         std::cerr << "  - Network issues preventing a successful connection to GitHub." << "\n";
         std::cerr << "Please check your search terms. If you are rate-limited, try again later." << "\n";
         std::cerr << "Using a GitHub Personal Access Token can increase rate limits." << "\n";
-    } else { // Negative values indicate libcurl internal errors
+    } else { // libcurl internal errors
         std::cerr << "Network/libcurl Error: An internal error occurred during the request." << "\n";
         std::cerr << "This means the request likely didn't reach GitHub servers successfully." << "\n";
         std::cerr << "Possible causes include:" << "\n";
@@ -256,6 +306,7 @@ int main() {
     }
 
   }
+  // Cleanup libcurl resources before exiting
   std::cout << "\nShutting down network components (libcurl)..." << "\n";
   curl_global_cleanup();
   std::cout << "Network components shut down." << "\n";

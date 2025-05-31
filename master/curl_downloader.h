@@ -19,6 +19,7 @@ public:
     CurlDownloader();
     ~CurlDownloader();
     void set_auth_token();
+    void set_auth_token(const std::string& token);
     void download_url(const std::string& url, const std::string& name);
     long searchRepositories(const std::string& search_term,
                             const std::vector<std::string>& qualifiers,
