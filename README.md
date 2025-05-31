@@ -134,5 +134,5 @@ Pull requests and issues are welcome!
 
 ## Author
 
-[Your Name]  
-[Your GitHub Profile]
+Carter Nolan
+https://github.com/waxmidget2
