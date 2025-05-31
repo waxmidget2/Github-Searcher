@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <git2.h>
+#include <fstream>
 
 CurlDownloader::CurlDownloader() {
   curl_handle = curl_easy_init();
@@ -33,8 +34,29 @@ size_t CurlDownloader::write_callback_std_string(void* contents, size_t size, si
   return new_length;
 }
 void CurlDownloader::set_auth_token() {
-  std::getline(std::cin, this->auth_token);
+    std::string token;
+    std::cout << "Enter GitHub API token: ";
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // clear buffer
+    std::getline(std::cin, token);
+    this->auth_token = token;
+
+    // Save token to .env file
+    std::ofstream envFile(".env");
+    if (envFile.is_open()) {
+        envFile << "GITHUB_TOKEN=" << token << std::endl;
+        envFile.close();
+        std::cout << "Token saved to .env file." << std::endl;
+    } else {
+        std::cerr << "Warning: Could not write to .env file." << std::endl;
+    }
+
+    if(auth_token.empty()) {
+        std::cerr << "Warning: Authorization token is empty. This may limit API access." << "\n";
+    } else {
+        std::cout << "Authorization token set successfully." << "\n";
+    }
 }
+
 void CurlDownloader::set_auth_token(const std::string& token) {
     this->auth_token = token;
     if(auth_token.empty()) {
