@@ -166,6 +166,13 @@ long CurlDownloader::searchRepositories(const std::string& search_term,
                   }
                   project.pushed_at = item.value("pushed_at", "N/A");
                   project.stargazers_count = item.value("stargazers_count", 0);
+                  // Add license parsing
+                  if (item.contains("license") && item["license"].is_object() && item["license"].contains("spdx_id")) {
+                      project.license = item["license"]["spdx_id"].get<std::string>();
+                      if (project.license == "NOASSERTION") project.license = "No license";
+                  } else {
+                      project.license = "Unknown";
+                  }
                   projects_out.push_back(project);
               }
               std::cout << "CurlDownloader: Successfully parsed " << projects_out.size() << " items." << "\n";

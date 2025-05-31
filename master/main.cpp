@@ -199,6 +199,7 @@ int main() {
                 std::cout << "  " << std::left << std::setw(15) << "Description:" << desc << "\n";
                 std::cout << "  " << std::left << std::setw(15) << "Stars:" << project.stargazers_count << "\n";
                 std::cout << "  " << std::left << std::setw(15) << "Last Push:" << project.pushed_at << "\n";
+                std::cout << "  " << std::left << std::setw(15) << "License:" << project.license << "\n";
                 if (i < found_projects.size() - 1) {
                     printSeparator('.');
                 }
@@ -277,6 +278,7 @@ int main() {
                 std::cout << "  " << std::left << std::setw(15) << "Description:" << desc << "\n";
                 std::cout << "  " << std::left << std::setw(15) << "Stars:" << project.stargazers_count << "\n";
                 std::cout << "  " << std::left << std::setw(15) << "Last Push:" << project.pushed_at << "\n";
+                std::cout << "  " << std::left << std::setw(15) << "License:" << project.license << "\n";
                 if (i < found_projects.size() - 1) {
                     printSeparator('.');
                 }

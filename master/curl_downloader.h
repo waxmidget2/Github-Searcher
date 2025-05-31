@@ -12,6 +12,7 @@ struct ProjectInfo {
     std::string description;
     std::string pushed_at;
     int stargazers_count;
+    std::string license;
 };
 
 class CurlDownloader {
