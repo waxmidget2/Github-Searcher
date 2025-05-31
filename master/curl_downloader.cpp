@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <git2.h>
 #include <fstream>
+#include <atomic>
+#include <chrono>
+#include <thread>
 
 CurlDownloader::CurlDownloader() {
   curl_handle = curl_easy_init();
@@ -248,6 +251,9 @@ void CurlDownloader::download_url(const std::string& url, const std::string& nam
     git_repository* repo = nullptr;
     git_clone_options clone_opts = GIT_CLONE_OPTIONS_INIT;
 
+    // Add progress callback
+    clone_opts.fetch_opts.callbacks.transfer_progress = CurlDownloader::clone_progress_cb;
+
     std::string git_clone_url = url; 
 
     int git_clone_res = git_clone(&repo, git_clone_url.c_str(), output_path.string().c_str(), &clone_opts);
@@ -278,5 +284,41 @@ void CurlDownloader::download_url(const std::string& url, const std::string& nam
         return;
     }
     return; 
+}
+
+// Progress callback for libgit2
+int CurlDownloader::clone_progress_cb(const git_indexer_progress* stats, void* /*payload*/) {
+    static int last_percent = -1;
+    static bool done = false;
+    int total = stats->total_objects;
+    int received = stats->received_objects;
+    int percent = total ? (100 * received / total) : 0;
+
+    // Reset done flag if a new download starts
+    if (percent < 100) {
+        done = false;
+    }
+
+    // Only update if percent changed
+    if (percent != last_percent) {
+        std::cout << "\r[";
+        int barWidth = 50;
+        int pos = (percent * barWidth) / 100;
+        for (int i = 0; i < barWidth; ++i) {
+            if (i < pos) std::cout << "=";
+            else if (i == pos) std::cout << ">";
+            else std::cout << " ";
+        }
+        std::cout << "] " << percent << "%";
+        std::cout.flush();
+        last_percent = percent;
+    }
+
+    // Print newline only once at 100%
+    if (percent == 100 && !done) {
+        std::cout << std::endl;
+        done = true;
+    }
+    return 0;
 }
 

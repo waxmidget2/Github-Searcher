@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <curl/curl.h>
+#include <git2.h>          // <-- Add this!
 #include "json.hpp"
 
 struct ProjectInfo {
@@ -22,6 +23,10 @@ public:
     void set_auth_token();
     void set_auth_token(const std::string& token);
     void download_url(const std::string& url, const std::string& name);
+
+    // Use git_indexer_progress for the callback
+    static int clone_progress_cb(const git_indexer_progress* stats, void* payload);
+
     long searchRepositories(const std::string& search_term,
                             const std::vector<std::string>& qualifiers,
                             std::vector<ProjectInfo>& projects_out,
