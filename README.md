@@ -9,7 +9,7 @@ A command-line tool to search GitHub repositories using the GitHub Search API, w
 - **Search GitHub repositories** by keyword and qualifiers (e.g., language, stars, topics).
 - **Secure authentication** using a GitHub Personal Access Token from a `.env` file or environment variable.
 - **Pagination** support for browsing multiple result pages.
-- **Download repositories** directly (interactive mode).
+- **Download repositories** directly (interactive mode or CLI).
 - **Clear, formatted output** for easy reading.
 - **Cross-platform** (Linux, macOS, Windows with minor adjustments).
 
@@ -19,7 +19,7 @@ A command-line tool to search GitHub repositories using the GitHub Search API, w
 
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/yourusername/github-searcher.git
+    git clone https://github.com/waxmidget2/github-searcher.git
     cd github-searcher
     ```
 
@@ -37,9 +37,46 @@ A command-line tool to search GitHub repositories using the GitHub Search API, w
 
 ---
 
-## Usage
+## Main Application Examples
 
-### CLI Mode
+- **Interactive search for C++ web servers:**
+    1. Run the program with no arguments:
+        ```sh
+        ./github-searcher
+        ```
+    2. Follow the prompts:
+        ```
+        --- Options: "download", "search", "exit",
+        --- "pp (previous page)", "at (auth token), "np (next page)."
+        >
+        ```
+    3. Type `search` and enter your search term, e.g.:
+        ```
+        Enter the primary GitHub repository search term (e.g., 'cpp web server'): cpp web server
+        Qualifier [1] (or press Enter to finish): language:C++
+        Qualifier [2] (or press Enter to finish): stars:>500
+        Qualifier [3] (or press Enter to finish):
+        ```
+    4. View results and use `download` or pagination commands as needed.
+
+- **Download a repository after searching (interactive mode):**
+    1. Run the program:
+        ```sh
+        ./github-searcher
+        ```
+    2. Perform your search as prompted.
+    3. When results are shown, type `download` at the prompt.
+    4. Enter the project number you wish to download, for example:
+        ```
+        > Project #: 2
+        ```
+    5. The repository will be downloaded to your current directory.
+
+---
+
+## CLI Usage
+
+You can also use the CLI mode for scripting or quick searches:
 
 ```sh
 ./github-searcher -s "cpp web server" -q "stars:>500" -q "language:C++" -p 1
@@ -49,16 +86,46 @@ A command-line tool to search GitHub repositories using the GitHub Search API, w
 - `-s`, `--search` : The main search term (required)
 - `-q`             : Add a search qualifier (can be repeated)
 - `-p`, `--page`   : Page number (optional, default: 1)
+- `-d`             : Download the Nth result automatically (optional)
 - `-h`, `--help`   : Show help
-
-**Example:**
-```sh
-./github-searcher -s "machine learning" -q "language:Python" -q "stars:>1000"
-```
 
 ---
 
-### Example Output
+## More CLI Examples
+
+- **Search for C++ projects with more than 1000 stars:**
+    ```sh
+    ./github-searcher -s "C++" -q "stars:>1000"
+    ```
+
+- **Search for Python web frameworks with a specific topic:**
+    ```sh
+    ./github-searcher -s "web framework" -q "language:Python" -q "topic:web"
+    ```
+
+- **Get the second page of results for JavaScript projects:**
+    ```sh
+    ./github-searcher -s "JavaScript" -p 2
+    ```
+
+- **Search for repositories with a specific license:**
+    ```sh
+    ./github-searcher -s "machine learning" -q "license:mit"
+    ```
+
+- **Download the first result for a Rust project directly:**
+    ```sh
+    ./github-searcher -s "Rust" -q "stars:>500" -d 1
+    ```
+
+- **Show help:**
+    ```sh
+    ./github-searcher --help
+    ```
+
+---
+
+## Example Output
 
 ```
 ================================================================================
